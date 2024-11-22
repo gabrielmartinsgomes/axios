@@ -1,13 +1,14 @@
 <script setup>
 import { ref, onMounted } from 'vue';
 import { useGenreStore } from '@/stores/genre';
+import { useRouter } from 'vue-router';
 import api from '@/plugins/axios';
 
 const tvShows = ref([]);
 const genreStore = useGenreStore();
+const router = useRouter();
 
 onMounted(async () => {
-  // Carrega os gêneros de TV usando a store
   await genreStore.getAllGenres('tv');
 });
 
@@ -20,12 +21,17 @@ const listTVShows = async (genreId) => {
   });
   tvShows.value = response.data.results;
 };
+
+
+function openTVShow(tvId) {
+  router.push({ name: 'TVDetails', params: { tvId } }); // Certifique-se de que o parâmetro está sendo enviado
+}
+
 </script>
 
 <template>
   <h1>Programas de TV</h1>
 
-  <!-- Lista de gêneros utilizando a store -->
   <ul class="genre-list">
     <li
       v-for="genre in genreStore.genres"
@@ -37,19 +43,18 @@ const listTVShows = async (genreId) => {
     </li>
   </ul>
 
-  <!-- Lista de programas de TV -->
   <div class="tv-show-list">
     <div v-for="show in tvShows" :key="show.id" class="tv-show-card">
       <img
         :src="`https://image.tmdb.org/t/p/w500${show.poster_path}`"
         :alt="show.name"
+        @click="openTVShow(show.id)" 
       />
       <div class="tv-show-details">
         <p class="tv-show-title">{{ show.name }}</p>
         <p class="tv-show-original-title">{{ show.original_name }}</p>
         <p class="tv-show-release-date">{{ show.first_air_date }}</p>
 
-        <!-- Exibição dos gêneros com clique -->
         <p class="tv-show-genres">
           <span
             v-for="genre_id in show.genre_ids"
@@ -63,6 +68,7 @@ const listTVShows = async (genreId) => {
     </div>
   </div>
 </template>
+
 
 <style scoped>
 .genre-list {
