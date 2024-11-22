@@ -15,15 +15,15 @@ onMounted(async () => {
   await tvStore.getTVDetail(props.tvId);
   console.log('Dados do programa de TV:', tvStore.currentTV); // Veja os dados recebidos
 });
-
 </script>
 
 <template>
   <div class="main">
     <div class="content">
       <img
-        :src="`https://image.tmdb.org/t/p/w185${tvStore.currentTV.poster_path}`"
+        :src="`https://image.tmdb.org/t/p/w500${tvStore.currentTV.poster_path}`"
         :alt="tvStore.currentTV.name"
+        class="tv-poster"
       />
 
       <div class="details">
@@ -34,30 +34,112 @@ onMounted(async () => {
         <p>Primeiro episódio: {{ tvStore.currentTV.first_air_date }}</p>
       </div>
     </div>
-  </div>
 
-  <p>Produtoras</p>
-  <div class="companies">
-    <template
-      v-for="company in tvStore.currentTV.production_companies"
-      :key="company.id"
-    >
-      <img
-        v-if="company.logo_path"
-        :src="`https://image.tmdb.org/t/p/w92${company.logo_path}`"
-        :alt="company.name"
-      />
-      <p v-else>{{ company.name }}</p>
-    </template>
+    <p>Produtoras</p>
+    <div class="companies">
+      <template v-for="company in tvStore.currentTV.production_companies" :key="company.id">
+        <img
+          v-if="company.logo_path"
+          :src="`https://image.tmdb.org/t/p/w500${company.logo_path}`" 
+          :alt="company.name"
+          class="company-logo" />
+        <p v-else>{{ company.name }}</p>
+      </template>
+    </div>
   </div>
 </template>
 
 <style scoped>
-  .companies {
-    display: flex;
-    flex-direction: row;
-    column-gap: 3rem;
+.main {
+  background-color: #212121;
+  color: #fff;
+}
+
+.content {
+  display: flex;
+  padding: 2rem;
+}
+
+.tv-poster {
+  width: 30%;
+  height: auto;
+  margin-right: 2rem;
+  box-shadow: 0 0 1rem rgba(0, 0, 0, 0.6);
+}
+
+.details {
+  flex: 1;
+}
+
+.details h1 {
+  font-size: 2rem;
+  margin-bottom: 1rem;
+}
+
+.details p {
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+.companies {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2rem;
+  justify-content: center;
+  padding: 2rem;
+}
+
+.companies img {
+  width: 120px;
+  height: auto;
+  border-radius: 0.5rem;
+}
+
+.companies p {
+  font-size: 1rem;
+  color: #ffcc00;
+  text-align: center;
+}
+
+/* Responsividade */
+@media (max-width: 768px) {
+  .content {
+    flex-direction: column;
     align-items: center;
-    margin-bottom: 2rem;
   }
+
+  .tv-poster {
+    width: 50%;
+  }
+
+  .details {
+    padding: 1rem;
+  }
+
+  .details h1 {
+    font-size: 1.5rem;
+  }
+
+  .details p {
+    font-size: 1.1rem;
+  }
+
+  .companies img {
+    width: 100px;
+  }
+}
+
+@media (max-width: 480px) {
+  .tv-poster {
+    width: 100%;
+  }
+
+  .details h1 {
+    font-size: 1.3rem;
+  }
+
+  .details p {
+    font-size: 1rem;
+  }
+}
 </style>

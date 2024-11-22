@@ -48,7 +48,7 @@ function openTVShow(tvId) {
       <img
         :src="`https://image.tmdb.org/t/p/w500${show.poster_path}`"
         :alt="show.name"
-        @click="openTVShow(show.id)" 
+        @click="openTVShow(show.id)"
       />
       <div class="tv-show-details">
         <p class="tv-show-title">{{ show.name }}</p>
@@ -68,7 +68,6 @@ function openTVShow(tvId) {
     </div>
   </div>
 </template>
-
 
 <style scoped>
 .genre-list {
@@ -150,5 +149,36 @@ function openTVShow(tvId) {
   cursor: pointer;
   background-color: #455a08;
   box-shadow: 0 0 0.5rem #748708;
+}
+
+/* Responsividade */
+@media (max-width: 768px) {
+  .tv-show-card {
+    width: 12rem;
+    height: 25rem;
+  }
+
+  .tv-show-title {
+    font-size: 1rem;
+  }
+
+  .tv-show-genres span {
+    font-size: 0.7rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .tv-show-card {
+    width: 10rem;
+    height: 20rem;
+  }
+
+  .tv-show-title {
+    font-size: 0.9rem;
+  }
+
+  .tv-show-genres span {
+    font-size: 0.6rem;
+  }
 }
 </style>

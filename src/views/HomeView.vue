@@ -3,3 +3,19 @@
       <h1>Home</h1>
     </div>
   </template>
+  <style scoped>
+  div {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    background-color: #f8f9fa;
+  }
+  
+  h1 {
+    font-size: 2.5rem;
+    color: #495057;
+  }
+  </style>
+  

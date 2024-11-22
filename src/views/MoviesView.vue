@@ -86,7 +86,7 @@ function openMovie(movieId) {
   display: flex;
   justify-content: center;
   flex-wrap: wrap;
-  gap: 2rem;
+  gap: 1rem;
   list-style: none;
   margin-bottom: 2rem;
 }
@@ -96,58 +96,61 @@ function openMovie(movieId) {
   border-radius: 1rem;
   padding: 0.5rem 1rem;
   color: #fff;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
 }
 
 .genre-item:hover {
-  cursor: pointer;
   background-color: #4e9e5f;
   box-shadow: 0 0 0.5rem #387250;
+}
+
+.genre-item.active {
+  background-color: #67b086;
+  font-weight: bold;
 }
 
 .movie-list {
   display: flex;
   flex-wrap: wrap;
-  gap: 1rem;
+  gap: 1.5rem;
+  justify-content: center;
 }
 
 .movie-card {
   width: 15rem;
-  height: 30rem;
   border-radius: 0.5rem;
   overflow: hidden;
   box-shadow: 0 0 0.5rem #000;
+  background-color: #1e1e1e;
+  color: #fff;
+  cursor: pointer;
+  transition: transform 0.3s ease;
+}
+
+.movie-card:hover {
+  transform: scale(1.05);
 }
 
 .movie-card img {
   width: 100%;
-  height: 20rem;
-  border-radius: 0.5rem;
-  box-shadow: 0 0 0.5rem #000;
+  height: 22rem;
+  object-fit: cover;
 }
 
 .movie-details {
-  padding: 0 0.5rem;
+  padding: 1rem;
 }
 
 .movie-title {
-  font-size: 1.1rem;
+  font-size: 1.2rem;
   font-weight: bold;
-  line-height: 1.3rem;
-  height: 3.2rem;
+  margin-bottom: 0.5rem;
 }
 
-.error-message {
-  color: red;
-  text-align: center;
-  margin-bottom: 1rem;
-}
-.movie-genres {
-  display: flex;
-  flex-direction: row;
-  flex-wrap: wrap;
-  align-items: flex-start;
-  justify-content: center;
-  gap: 0.2rem;
+.movie-release-date {
+  font-size: 0.9rem;
+  color: #aaa;
 }
 
 .movie-genres span {
@@ -157,21 +160,46 @@ function openMovie(movieId) {
   color: #fff;
   font-size: 0.8rem;
   font-weight: bold;
+  margin-right: 0.5rem;
+  cursor: pointer;
 }
 
 .movie-genres span:hover {
-  cursor: pointer;
-  background-color: #455a08;
-  box-shadow: 0 0 0.5rem #748708;
-}
-.active {
-  background-color: #67b086;
-  font-weight: bolder;
+  background-color: #5b6b08;
 }
 
-.movie-genres span.active {
-  background-color: #abc322;
-  color: #000;
-  font-weight: bolder;
+/* Responsividade */
+@media (max-width: 768px) {
+  .movie-card {
+    width: 12rem;
+  }
+
+  .movie-details {
+    padding: 0.8rem;
+  }
+
+  .movie-title {
+    font-size: 1rem;
+  }
+
+  .movie-release-date {
+    font-size: 0.8rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .movie-card {
+    width: 10rem;
+  }
+
+  .movie-title {
+    font-size: 0.9rem;
+  }
+
+  .movie-release-date {
+    font-size: 0.7rem;
+  }
 }
 </style>
+
+
