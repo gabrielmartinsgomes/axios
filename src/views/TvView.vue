@@ -1,47 +1,66 @@
 <script setup>
 import { ref, onMounted } from 'vue';
+import api from '@/plugins/axios';
+import Loading from 'vue-loading-overlay';
 import { useGenreStore } from '@/stores/genre';
 import { useRouter } from 'vue-router';
-import api from '@/plugins/axios';
 
 const tvShows = ref([]);
+const errorMessage = ref('');
+const isLoading = ref(false);
+const formatDate = (date) => new Date(date).toLocaleDateString('pt-BR');
 const genreStore = useGenreStore();
 const router = useRouter();
 
 onMounted(async () => {
-  await genreStore.getAllGenres('tv');
+  isLoading.value = true;
+  try {
+    await genreStore.getAllGenres('tv');
+  } catch (error) {
+    errorMessage.value = 'Erro ao carregar os gêneros de TV.';
+  } finally {
+    isLoading.value = false;
+  }
 });
 
 const listTVShows = async (genreId) => {
-  const response = await api.get('discover/tv', {
-    params: {
-      with_genres: genreId,
-      language: 'pt-BR',
-    },
-  });
-  tvShows.value = response.data.results;
+  genreStore.setCurrentGenreId(genreId);
+  isLoading.value = true;
+  try {
+    const response = await api.get('discover/tv', {
+      params: {
+        with_genres: genreId,
+        language: 'pt-BR',
+      },
+    });
+    tvShows.value = response.data.results;
+  } catch (error) {
+    errorMessage.value = 'Erro ao carregar os programas de TV.';
+  } finally {
+    isLoading.value = false;
+  }
 };
 
-
 function openTVShow(tvId) {
-  router.push({ name: 'TVDetails', params: { tvId } }); // Certifique-se de que o parâmetro está sendo enviado
+  router.push({ name: 'TVDetails', params: { tvId } });
 }
-
 </script>
 
 <template>
   <h1>Programas de TV</h1>
-
+  <p v-if="errorMessage" class="error-message">{{ errorMessage }}</p>
   <ul class="genre-list">
     <li
       v-for="genre in genreStore.genres"
       :key="genre.id"
       @click="listTVShows(genre.id)"
       class="genre-item"
+      :class="{ active: genre.id === genreStore.currentGenreId }"
     >
       {{ genre.name }}
     </li>
   </ul>
+  <loading v-model:active="isLoading" is-full-page />
 
   <div class="tv-show-list">
     <div v-for="show in tvShows" :key="show.id" class="tv-show-card">
@@ -52,14 +71,13 @@ function openTVShow(tvId) {
       />
       <div class="tv-show-details">
         <p class="tv-show-title">{{ show.name }}</p>
-        <p class="tv-show-original-title">{{ show.original_name }}</p>
-        <p class="tv-show-release-date">{{ show.first_air_date }}</p>
-
+        <p class="tv-show-release-date">{{ formatDate(show.first_air_date) }}</p>
         <p class="tv-show-genres">
           <span
             v-for="genre_id in show.genre_ids"
             :key="genre_id"
             @click="listTVShows(genre_id)"
+            :class="{ active: genre_id === genreStore.currentGenreId }"
           >
             {{ genreStore.getGenreName(genre_id) }}
           </span>
@@ -74,66 +92,71 @@ function openTVShow(tvId) {
   display: flex;
   justify-content: center;
   flex-wrap: wrap;
-  gap: 2rem;
+  gap: 1rem;
   list-style: none;
-  padding: 0;
+  margin-bottom: 2rem;
 }
 
 .genre-item {
-  background-color: #5d6424;
+  background-color: #387250;
   border-radius: 1rem;
   padding: 0.5rem 1rem;
-  align-self: center;
   color: #fff;
-  display: flex;
-  justify-content: center;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
 }
 
 .genre-item:hover {
-  cursor: pointer;
-  background-color: #7d8a2e;
-  box-shadow: 0 0 0.5rem #5d6424;
+  background-color: #4e9e5f;
+  box-shadow: 0 0 0.5rem #387250;
+}
+
+.genre-item.active {
+  background-color: #67b086;
+  font-weight: bold;
 }
 
 .tv-show-list {
   display: flex;
   flex-wrap: wrap;
-  gap: 1rem;
+  gap: 1.5rem;
+  justify-content: center;
 }
 
 .tv-show-card {
   width: 15rem;
-  height: 30rem;
   border-radius: 0.5rem;
   overflow: hidden;
   box-shadow: 0 0 0.5rem #000;
+  background-color: #1e1e1e;
+  color: #fff;
+  cursor: pointer;
+  transition: transform 0.3s ease;
+}
+
+.tv-show-card:hover {
+  transform: scale(1.05);
 }
 
 .tv-show-card img {
   width: 100%;
-  height: 20rem;
-  border-radius: 0.5rem;
-  box-shadow: 0 0 0.5rem #000;
+  height: 22rem;
+  object-fit: cover;
 }
 
 .tv-show-details {
-  padding: 0 0.5rem;
+  padding: 1rem;
 }
 
 .tv-show-title {
-  font-size: 1.1rem;
+  font-size: 1.2rem;
   font-weight: bold;
-  line-height: 1.3rem;
-  height: 3.2rem;
+  margin-bottom: 0.5rem;
 }
 
-.tv-show-genres {
-  display: flex;
-  flex-direction: row;
-  flex-wrap: wrap;
-  align-items: flex-start;
-  justify-content: center;
-  gap: 0.2rem;
+.tv-show-release-date {
+  font-size: 0.9rem;
+  color: #aaa;
 }
 
 .tv-show-genres span {
@@ -143,42 +166,44 @@ function openTVShow(tvId) {
   color: #fff;
   font-size: 0.8rem;
   font-weight: bold;
+  margin-right: 0.5rem;
+  cursor: pointer;
 }
 
 .tv-show-genres span:hover {
-  cursor: pointer;
-  background-color: #455a08;
-  box-shadow: 0 0 0.5rem #748708;
+  background-color: #5b6b08;
 }
 
 /* Responsividade */
 @media (max-width: 768px) {
   .tv-show-card {
     width: 12rem;
-    height: 25rem;
+  }
+
+  .tv-show-details {
+    padding: 0.8rem;
   }
 
   .tv-show-title {
     font-size: 1rem;
   }
 
-  .tv-show-genres span {
-    font-size: 0.7rem;
+  .tv-show-release-date {
+    font-size: 0.8rem;
   }
 }
 
 @media (max-width: 480px) {
   .tv-show-card {
     width: 10rem;
-    height: 20rem;
   }
 
   .tv-show-title {
     font-size: 0.9rem;
   }
 
-  .tv-show-genres span {
-    font-size: 0.6rem;
+  .tv-show-release-date {
+    font-size: 0.7rem;
   }
 }
 </style>
