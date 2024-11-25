@@ -1,6 +1,6 @@
 <script setup>
 import { defineProps, onMounted } from 'vue';
-import { useTVStore } from '@/stores/tv'; // Criar uma nova store
+import { useTVStore } from '@/stores/tv';
 const tvStore = useTVStore();
 
 const props = defineProps({
@@ -11,9 +11,9 @@ const props = defineProps({
 });
 
 onMounted(async () => {
-  console.log('ID do programa de TV:', props.tvId); // Certifique-se de que o ID está correto
+  console.log('ID do programa de TV:', props.tvId);
   await tvStore.getTVDetail(props.tvId);
-  console.log('Dados do programa de TV:', tvStore.currentTV); // Veja os dados recebidos
+  console.log('Dados do programa de TV:', tvStore.currentTV);
 });
 </script>
 
@@ -21,21 +21,19 @@ onMounted(async () => {
   <div class="main">
     <div class="content">
       <img
-        :src="`https://image.tmdb.org/t/p/w500${tvStore.currentTV.poster_path}`"
+        :src="`https://image.tmdb.org/t/p/w780${tvStore.currentTV.poster_path}`"
         :alt="tvStore.currentTV.name"
-        class="tv-poster"
       />
 
       <div class="details">
         <h1>Programa: {{ tvStore.currentTV.name }}</h1>
         <p>{{ tvStore.currentTV.tagline }}</p>
         <p>{{ tvStore.currentTV.overview }}</p>
-        <p>Avaliação: {{ tvStore.currentTV.vote_average }}</p>
         <p>Primeiro episódio: {{ tvStore.currentTV.first_air_date }}</p>
+        <p>Avaliação: {{ tvStore.currentTV.vote_average }}</p>
       </div>
     </div>
 
-    <p>Produtoras</p>
     <div class="companies">
       <template v-for="company in tvStore.currentTV.production_companies" :key="company.id">
         <img
@@ -51,52 +49,73 @@ onMounted(async () => {
 
 <style scoped>
 .main {
-  background-color: #212121;
-  color: #fff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 2rem;
+  background-color: #121212;
+  color: #f4f4f4;
+  min-height: 100vh;
 }
 
 .content {
   display: flex;
-  padding: 2rem;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 2rem;
+  max-width: 1400px;
+  width: 100%;
 }
 
-.tv-poster {
-  width: 30%;
+.content img {
+  width: 50%;
   height: auto;
-  margin-right: 2rem;
-  box-shadow: 0 0 1rem rgba(0, 0, 0, 0.6);
+  border-radius: 1rem;
+  object-fit: cover;
+  box-shadow: 0 0 2rem rgba(0, 0, 0, 0.8);
 }
 
 .details {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
   flex: 1;
+  padding: 2rem;
 }
 
 .details h1 {
-  font-size: 2rem;
-  margin-bottom: 1rem;
+  font-size: 3rem;
+  color: #ffcc00;
+  margin: 0;
 }
 
 .details p {
-  font-size: 1rem;
-  line-height: 1.5;
+  font-size: 1.5rem;
+  line-height: 2rem;
+  color: #f4f4f4;
 }
 
 .companies {
   display: flex;
+  justify-content: center;
   flex-wrap: wrap;
   gap: 2rem;
-  justify-content: center;
+  margin-top: 3rem;
   padding: 2rem;
+  background-color: #121212;
+  border-radius: 1rem;
+  width: 100%;
 }
 
 .companies img {
-  width: 120px;
+  width: 150px;
   height: auto;
   border-radius: 0.5rem;
+  box-shadow: 0 0 1rem rgba(255, 255, 255, 0.2);
 }
 
 .companies p {
-  font-size: 1rem;
+  font-size: 1.5rem;
   color: #ffcc00;
   text-align: center;
 }
@@ -108,8 +127,9 @@ onMounted(async () => {
     align-items: center;
   }
 
-  .tv-poster {
-    width: 50%;
+  .content img {
+    width: 100%;
+    height: auto;
   }
 
   .details {
@@ -117,11 +137,11 @@ onMounted(async () => {
   }
 
   .details h1 {
-    font-size: 1.5rem;
+    font-size: 2.5rem;
   }
 
   .details p {
-    font-size: 1.1rem;
+    font-size: 1.3rem;
   }
 
   .companies img {
@@ -130,16 +150,17 @@ onMounted(async () => {
 }
 
 @media (max-width: 480px) {
-  .tv-poster {
+  .content img {
     width: 100%;
+    height: auto;
   }
 
   .details h1 {
-    font-size: 1.3rem;
+    font-size: 2rem;
   }
 
   .details p {
-    font-size: 1rem;
+    font-size: 1.2rem;
   }
 }
 </style>
