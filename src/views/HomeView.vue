@@ -29,9 +29,17 @@ const fetchTrendingTVShows = async () => {
 };
 
 const fetchPopularActors = async () => {
-  const response = await api.get("person/popular", { params: { language: "pt-BR" } });
-  popularActors.value = response.data.results;
+  try {
+    const response = await api.get("person/popular", {
+      params: { language: "pt-BR", page: 2 }, // Obtém apenas a 1ª página de atores populares
+    });
+    // Mantém apenas os primeiros 10 atores mais famosos
+    popularActors.value = response.data.results.slice(0, 20);
+  } catch (error) {
+    console.error("Erro ao buscar os atores populares:", error);
+  }
 };
+
 
 // Chama as funções no mounted
 onMounted(async () => {
