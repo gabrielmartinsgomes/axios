@@ -7,7 +7,6 @@ import { useRouter } from "vue-router";
 const nowPlayingMovies = ref([]);
 const trendingTVShows = ref([]);
 const popularActors = ref([]);
-const topRated = ref([]);
 
 const router = useRouter();
 
@@ -15,7 +14,6 @@ const router = useRouter();
 const currentMoviePage = ref(0);
 const currentTVPage = ref(0);
 const currentActorPage = ref(0);
-const currentTopRatedPage = ref(0); // Para a quarta seção (topRated)
 
 const ITEMS_PER_PAGE = 5;
 
@@ -35,23 +33,12 @@ const fetchPopularActors = async () => {
   popularActors.value = response.data.results;
 };
 
-const fetchTopRated = async () => {
-  const [topRatedMovies, topRatedTV] = await Promise.all([
-    api.get('movie/top_rated', { params: { language: 'pt-BR' } }),
-    api.get('tv/top_rated', { params: { language: 'pt-BR' } }),
-  ]);
-
-  // Combina os filmes e programas de TV em um único array
-  topRated.value = [...topRatedMovies.data.results, ...topRatedTV.data.results];
-};
-
 // Chama as funções no mounted
 onMounted(async () => {
   await Promise.all([
     fetchNowPlayingMovies(),
     fetchTrendingTVShows(),
-    fetchPopularActors(),
-    fetchTopRated(), 
+    fetchPopularActors(), 
   ]);
 });
 
@@ -63,8 +50,6 @@ const nextPage = (type) => {
     currentTVPage.value++;
   } else if (type === "actors" && (currentActorPage.value + 1) * ITEMS_PER_PAGE < popularActors.value.length) {
     currentActorPage.value++;
-  } else if (type === "topRated" && (currentTopRatedPage.value + 1) * ITEMS_PER_PAGE < topRated.value.length) {
-    currentTopRatedPage.value++;
   }
 };
 
@@ -75,8 +60,6 @@ const prevPage = (type) => {
     currentTVPage.value--;
   } else if (type === "actors" && currentActorPage.value > 0) {
     currentActorPage.value--;
-  } else if (type === "topRated" && currentTopRatedPage.value > 0) {
-    currentTopRatedPage.value--;
   }
 };
 
@@ -186,38 +169,7 @@ const getCarouselStyle = (index, currentPage) => {
           :class="{ active: index === currentActorPage }"
         ></span>
       </div>
-    </section>
-
-    <!-- Seção 4: Filmes/Programas com Maior Nota -->
-    <section class="carousel-section">
-      <h2>⭐ Filmes/Programas com Maior Nota</h2>
-      <div class="carousel-wrapper">
-        <button class="carousel-control prev" @click="prevPage('topRated')">◀</button>
-        <div class="carousel">
-          <div
-            v-for="(item, index) in topRated"
-            :key="item.id"
-            class="carousel-item"
-            :style="getCarouselStyle(index, currentTopRatedPage)"
-            @click="goToMovieDetails(item.id)"
-          >
-            <img
-              :src="`https://image.tmdb.org/t/p/w500${item.poster_path}`"
-              :alt="item.title || item.name"
-            />
-            <p>{{ item.title || item.name }}</p>
-          </div>
-        </div>
-        <button class="carousel-control next" @click="nextPage('topRated')">▶</button>
-      </div>
-      <div class="carousel-indicators">
-        <span
-          v-for="(_, index) in Math.ceil(topRated.length / ITEMS_PER_PAGE)"
-          :key="index"
-          :class="{ active: index === currentTopRatedPage }"
-        ></span>
-      </div>
-    </section>
+    </section>  
   </div>
 </template>
 
@@ -340,4 +292,3 @@ const getCarouselStyle = (index, currentPage) => {
   }
 }
 </style>
-

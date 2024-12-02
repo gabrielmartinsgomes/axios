@@ -23,9 +23,14 @@ const routes = [
     component: () => import('../views/TvView.vue'),
   },
   {
+    path: "/actor/:actorId",
+    name: "ActorDetails",
+    component: () => import("../views/ActorDetailsView.vue"),
+  },  
+  {
     path: '/tvdetail/:tvId',
     name: 'TVDetails',
-    component: () => import('@/views/TvDetailsView.vue'),
+    component: () => import('../views/TvDetailsView.vue'),
     props: true, // Garante que os parâmetros sejam passados como props
   }
 ];

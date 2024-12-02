@@ -7,7 +7,6 @@ import { useRouter } from 'vue-router'
 
 
 const movies = ref([]);
-const errorMessage = ref('');
 const isLoading = ref(false);
 const formatDate = (date) => new Date(date).toLocaleDateString('pt-BR');
 const genreStore = useGenreStore();
@@ -40,48 +39,50 @@ function openMovie(movieId) {
 </script>
 
 <template>
-  <h1>Filmes</h1>
-  <p v-if="errorMessage" class="error-message">{{ errorMessage }}</p>
-  <ul class="genre-list">
-    <li
-    v-for="genre in genreStore.genres" :key="genre.id" @click="listMovies(genre.id)" class="genre-item" :class="{ active: genre.id === genreStore.currentGenreId }"
-  >
-  
-    {{ genre.name }}
-  
-  </li>
-  </ul>
-  <loading v-model:active="isLoading" is-full-page />
-
-  <div class="movie-list">
-  <div v-for="movie in movies" :key="movie.id" class="movie-card">
-    
-    <img
-  :src="`https://image.tmdb.org/t/p/w500${movie.poster_path}`"
-  :alt="movie.title"
-  @click="openMovie(movie.id)"
-/>
-    <div class="movie-details">
-      <p class="movie-title">{{ movie.title }}</p>
-      <p class="movie-release-date">{{ formatDate(movie.release_date) }}</p>
-      <p class="movie-genres">
-        <span
-  v-for="genre_id in movie.genre_ids"
-  :key="genre_id"
-  @click="listMovies(genre_id)"
-  :class="{ active: genre_id === genreStore.currentGenreId }"
->
-   {{ genreStore.getGenreName(genre_id) }} 
-</span>
-</p>
+  <div class="page">
+    <h1>Filmes</h1>
+    <ul class="genre-list">
+      <li
+        v-for="genre in genreStore.genres"
+        :key="genre.id"
+        @click="listMovies(genre.id)"
+        class="genre-item"
+        :class="{ active: genre.id === genreStore.currentGenreId }"
+      >
+        {{ genre.name }}
+      </li>
+    </ul>
+    <loading v-model:active="isLoading" is-full-page />
+    <div class="item-list">
+      <div v-for="movie in movies" :key="movie.id" class="card" @click="openMovie(movie.id)">
+        <img :src="`https://image.tmdb.org/t/p/w500${movie.poster_path}`" :alt="movie.title" />
+        <div class="details">
+          <p class="card-title">{{ movie.title }}</p>
+          <p class="card-date">{{ formatDate(movie.release_date) }}</p>
+          <p class="card-genres">
+            <span
+              v-for="genre_id in movie.genre_ids"
+              :key="genre_id"
+              @click.stop="listMovies(genre_id)"
+            >
+              {{ genreStore.getGenreName(genre_id) }}
+            </span>
+          </p>
+        </div>
+      </div>
     </div>
-    
   </div>
-</div>
-
 </template>
 
+
 <style scoped>
+/* Estilo Baseado no CSS da HomeView */
+.page {
+  padding: 2rem;
+  background-color: #121212; /* Mesma cor de fundo da Home */
+  color: #f4f4f4;
+}
+
 .genre-list {
   display: flex;
   justify-content: center;
@@ -110,50 +111,52 @@ function openMovie(movieId) {
   font-weight: bold;
 }
 
-.movie-list {
+.item-list {
   display: flex;
   flex-wrap: wrap;
   gap: 1.5rem;
   justify-content: center;
 }
 
-.movie-card {
+.card {
   width: 15rem;
   border-radius: 0.5rem;
   overflow: hidden;
-  box-shadow: 0 0 0.5rem #000;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3); /* Altere para um sombreamento similar à Home */
   background-color: #1e1e1e;
   color: #fff;
   cursor: pointer;
-  transition: transform 0.3s ease;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
-.movie-card:hover {
+.card:hover {
   transform: scale(1.05);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.5);
 }
 
-.movie-card img {
+.card img {
   width: 100%;
   height: 22rem;
-  object-fit: cover;
+  object-fit: contain; /* Mesma lógica da Home */
+  border-radius: 0.5rem;
 }
 
-.movie-details {
+.card .details {
   padding: 1rem;
 }
 
-.movie-title {
+.card-title {
   font-size: 1.2rem;
   font-weight: bold;
   margin-bottom: 0.5rem;
 }
 
-.movie-release-date {
+.card-date {
   font-size: 0.9rem;
   color: #aaa;
 }
 
-.movie-genres span {
+.card-genres span {
   background-color: #748708;
   border-radius: 0.5rem;
   padding: 0.2rem 0.5rem;
@@ -164,42 +167,71 @@ function openMovie(movieId) {
   cursor: pointer;
 }
 
-.movie-genres span:hover {
+.card-genres span:hover {
   background-color: #5b6b08;
+}
+
+/* Indicadores de Páginas (se necessário) */
+.indicators {
+  display: flex;
+  justify-content: center;
+  margin-top: 1rem;
+}
+
+.indicators span {
+  width: 1rem;
+  height: 1rem;
+  margin: 0 0.5rem;
+  background-color: #444;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.indicators span.active {
+  background-color: #ffcc00;
 }
 
 /* Responsividade */
 @media (max-width: 768px) {
-  .movie-card {
+  .card {
     width: 12rem;
   }
 
-  .movie-details {
+  .card img {
+    height: 18rem;
+  }
+
+  .card .details {
     padding: 0.8rem;
   }
 
-  .movie-title {
+  .card-title {
     font-size: 1rem;
   }
 
-  .movie-release-date {
+  .card-date {
     font-size: 0.8rem;
   }
 }
 
 @media (max-width: 480px) {
-  .movie-card {
+  .card {
     width: 10rem;
   }
 
-  .movie-title {
+  .card img {
+    height: 15rem;
+  }
+
+  .card-title {
     font-size: 0.9rem;
   }
 
-  .movie-release-date {
+  .card-date {
     font-size: 0.7rem;
   }
 }
+
 </style>
 
 
