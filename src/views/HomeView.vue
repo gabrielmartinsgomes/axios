@@ -70,6 +70,10 @@ const goToMovieDetails = (movieId) => {
 const goToTVDetails = (tvId) => {
   router.push({ name: "TVDetails", params: { tvId } });
 };
+const goToActorDetails = (actorId) => {
+  router.push({ name: "ActorDetails", params: { actorId } });
+};
+
 
 const getCarouselStyle = (index, currentPage) => {
   const offset = currentPage * ITEMS_PER_PAGE * 100; // Deslocamento baseado na página
@@ -151,14 +155,16 @@ const getCarouselStyle = (index, currentPage) => {
         <button class="carousel-control prev" @click="prevPage('actors')">◀</button>
         <div class="carousel">
           <div
-            v-for="(actor, index) in popularActors"
-            :key="actor.id"
-            class="carousel-item"
-            :style="getCarouselStyle(index, currentActorPage)"
-          >
+              v-for="(actor, index) in popularActors"
+              :key="actor.id"
+              class="carousel-item"
+              :style="getCarouselStyle(index, currentActorPage)"
+              @click="goToActorDetails(actor.id)" 
+            >
             <img :src="`https://image.tmdb.org/t/p/w500${actor.profile_path}`" :alt="actor.name" />
             <p>{{ actor.name }}</p>
           </div>
+
         </div>
         <button class="carousel-control next" @click="nextPage('actors')">▶</button>
       </div>
