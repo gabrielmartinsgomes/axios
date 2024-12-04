@@ -12,6 +12,10 @@ const formatDate = (date) => new Date(date).toLocaleDateString('pt-BR');
 const genreStore = useGenreStore();
 const router = useRouter()
 
+defineProps({
+  searchResults: Object
+});
+
 
 onMounted(async () => {
   isLoading.value = true;
@@ -40,15 +44,22 @@ function openMovie(movieId) {
 
 <template>
   <div class="page">
+    <div v-if="searchResults.movies.length > 0" class="movie-view">
+      <h1>Filmes - Resultados da Pesquisa</h1>
+      <div class="results">
+        <div v-for="movie in searchResults.movies" :key="movie.id">
+          <h3>{{ movie.title }}</h3>
+          <img :src="`https://image.tmdb.org/t/p/w500${movie.poster_path}`" alt="Imagem do filme" />
+        </div>
+      </div>
+    </div>
+    <div v-else>
+      <p>Nenhum filme encontrado.</p>
+    </div>
     <h1>Filmes</h1>
     <ul class="genre-list">
-      <li
-        v-for="genre in genreStore.genres"
-        :key="genre.id"
-        @click="listMovies(genre.id)"
-        class="genre-item"
-        :class="{ active: genre.id === genreStore.currentGenreId }"
-      >
+      <li v-for="genre in genreStore.genres" :key="genre.id" @click="listMovies(genre.id)" class="genre-item"
+        :class="{ active: genre.id === genreStore.currentGenreId }">
         {{ genre.name }}
       </li>
     </ul>
@@ -60,11 +71,7 @@ function openMovie(movieId) {
           <p class="card-title">{{ movie.title }}</p>
           <p class="card-date">{{ formatDate(movie.release_date) }}</p>
           <p class="card-genres">
-            <span
-              v-for="genre_id in movie.genre_ids"
-              :key="genre_id"
-              @click.stop="listMovies(genre_id)"
-            >
+            <span v-for="genre_id in movie.genre_ids" :key="genre_id" @click.stop="listMovies(genre_id)">
               {{ genreStore.getGenreName(genre_id) }}
             </span>
           </p>
@@ -79,10 +86,30 @@ function openMovie(movieId) {
 /* Estilo Baseado no CSS da HomeView */
 .page {
   padding: 2rem;
-  background-color: #121212; /* Mesma cor de fundo da Home */
+  background-color: #121212;
+  /* Mesma cor de fundo da Home */
   color: #f4f4f4;
 }
 
+.movie-view {
+  padding: 2rem;
+}
+
+.results {
+  display: flex;
+  gap: 2rem;
+  flex-wrap: wrap;
+}
+
+.results div {
+  width: 200px;
+  text-align: center;
+}
+
+.results img {
+  width: 100%;
+  border-radius: 0.5rem;
+}
 .genre-list {
   display: flex;
   justify-content: center;
@@ -122,7 +149,8 @@ function openMovie(movieId) {
   width: 15rem;
   border-radius: 0.5rem;
   overflow: hidden;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3); /* Altere para um sombreamento similar à Home */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+  /* Altere para um sombreamento similar à Home */
   background-color: #1e1e1e;
   color: #fff;
   cursor: pointer;
@@ -137,7 +165,8 @@ function openMovie(movieId) {
 .card img {
   width: 100%;
   height: 22rem;
-  object-fit: contain; /* Mesma lógica da Home */
+  object-fit: contain;
+  /* Mesma lógica da Home */
   border-radius: 0.5rem;
 }
 
@@ -231,7 +260,4 @@ function openMovie(movieId) {
     font-size: 0.7rem;
   }
 }
-
 </style>
-
-

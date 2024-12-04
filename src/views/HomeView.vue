@@ -7,15 +7,13 @@ import { useRouter } from "vue-router";
 const nowPlayingMovies = ref([]);
 const trendingTVShows = ref([]);
 const popularActors = ref([]);
+const trendingTrailers = ref([]); // Trailers mais populares
+const activeTrailerBackground = ref(""); // Imagem de fundo do trailer ativo
 
 const router = useRouter();
-
-// Estado dos carrosséis
-const currentMoviePage = ref(0);
-const currentTVPage = ref(0);
-const currentActorPage = ref(0);
-
-const ITEMS_PER_PAGE = 5;
+defineProps({
+  searchResults: Object
+});
 
 // Funções para buscar dados
 const fetchNowPlayingMovies = async () => {
@@ -31,46 +29,37 @@ const fetchTrendingTVShows = async () => {
 const fetchPopularActors = async () => {
   try {
     const response = await api.get("person/popular", {
-      params: { language: "pt-BR", page: 2 }, // Obtém apenas a 1ª página de atores populares
+      params: { language: "pt-BR", page: 1 },
     });
-    // Mantém apenas os primeiros 10 atores mais famosos
     popularActors.value = response.data.results.slice(0, 20);
   } catch (error) {
     console.error("Erro ao buscar os atores populares:", error);
   }
 };
 
-
-// Chama as funções no mounted
-onMounted(async () => {
-  await Promise.all([
-    fetchNowPlayingMovies(),
-    fetchTrendingTVShows(),
-    fetchPopularActors(), 
-  ]);
-});
-
-// Funções de navegação para carrossel
-const nextPage = (type) => {
-  if (type === "movies" && (currentMoviePage.value + 1) * ITEMS_PER_PAGE < nowPlayingMovies.value.length) {
-    currentMoviePage.value++;
-  } else if (type === "tv" && (currentTVPage.value + 1) * ITEMS_PER_PAGE < trendingTVShows.value.length) {
-    currentTVPage.value++;
-  } else if (type === "actors" && (currentActorPage.value + 1) * ITEMS_PER_PAGE < popularActors.value.length) {
-    currentActorPage.value++;
+const fetchTrendingTrailers = async () => {
+  try {
+    const response = await api.get("movie/popular", { params: { language: "pt-BR" } });
+    const moviesWithTrailers = await Promise.all(
+      response.data.results.slice(0, 5).map(async (movie) => {
+        const videosResponse = await api.get(`movie/${movie.id}/videos`, {
+          params: { language: "pt-BR" },
+        });
+        const trailer = videosResponse.data.results.find((video) => video.type === "Trailer");
+        return {
+          title: movie.title,
+          backdropPath: movie.backdrop_path,
+          trailerKey: trailer ? trailer.key : null,
+        };
+      })
+    );
+    trendingTrailers.value = moviesWithTrailers.filter((item) => item.trailerKey);
+  } catch (error) {
+    console.error("Erro ao buscar os trailers:", error);
   }
 };
 
-const prevPage = (type) => {
-  if (type === "movies" && currentMoviePage.value > 0) {
-    currentMoviePage.value--;
-  } else if (type === "tv" && currentTVPage.value > 0) {
-    currentTVPage.value--;
-  } else if (type === "actors" && currentActorPage.value > 0) {
-    currentActorPage.value--;
-  }
-};
-
+// Funções de navegação para os detalhes
 const goToMovieDetails = (movieId) => {
   router.push({ name: "MovieDetails", params: { movieId } });
 };
@@ -78,119 +67,137 @@ const goToMovieDetails = (movieId) => {
 const goToTVDetails = (tvId) => {
   router.push({ name: "TVDetails", params: { tvId } });
 };
+
 const goToActorDetails = (actorId) => {
   router.push({ name: "ActorDetails", params: { actorId } });
 };
 
-
-const getCarouselStyle = (index, currentPage) => {
-  const offset = currentPage * ITEMS_PER_PAGE * 100; // Deslocamento baseado na página
-  const itemWidth = 100 / ITEMS_PER_PAGE; // Largura de cada item
-  const translateX = `calc(${index * itemWidth}% - ${offset}%)`;
-  return {
-    transform: `translateX(${translateX})`,
-    transition: "transform 0.5s ease-in-out", // Animação suave ao trocar de página
-  };
+// Função para definir o fundo da seção de trailers
+const setTrailerBackground = (backdropPath) => {
+  activeTrailerBackground.value = `https://image.tmdb.org/t/p/original${backdropPath}`;
 };
+
+// Chama as funções no mounted
+onMounted(async () => {
+  await Promise.all([
+    fetchNowPlayingMovies(),
+    fetchTrendingTVShows(),
+    fetchPopularActors(),
+    fetchTrendingTrailers(),
+  ]);
+});
 </script>
-
-
-
-
 
 <template>
   <div class="home">
+    <!-- Logo e nome -->
+    <div class="logo-container">
+      <img src="../assets/logo.png" alt="Logo" class="logo-image" />
+    </div>
+   
+    <h1>Resultados da Pesquisa</h1>
+    <div v-if="searchResults.movies.length > 0">
+      <h2>Filmes</h2>
+      <div class="results">
+        <div v-for="movie in searchResults.movies" :key="movie.id">
+          <h3>{{ movie.title }}</h3>
+          <img :src="`https://image.tmdb.org/t/p/w500${movie.poster_path}`" alt="Imagem do filme" />
+        </div>
+      </div>
+    </div>
+    <div v-if="searchResults.tv.length > 0">
+      <h2>Programas de TV</h2>
+      <div class="results">
+        <div v-for="tv in searchResults.tv" :key="tv.id">
+          <h3>{{ tv.name }}</h3>
+          <img :src="`https://image.tmdb.org/t/p/w500${tv.poster_path}`" alt="Imagem do programa de TV" />
+        </div>
+      </div>
+    </div>
+    <div v-else>
+      <p>Nenhum resultado encontrado.</p>
+    </div>
+
     <!-- Seção 1: Filmes em Cartaz -->
     <section class="carousel-section">
       <h2>🎬 Filmes em Cartaz</h2>
-      <div class="carousel-wrapper">
-        <button class="carousel-control prev" @click="prevPage('movies')">◀</button>
-        <div class="carousel">
-          <div
-            v-for="(movie, index) in nowPlayingMovies"
-            :key="movie.id"
-            class="carousel-item"
-            :style="getCarouselStyle(index, currentMoviePage)"
-            @click="goToMovieDetails(movie.id)"
-          >
-            <img :src="`https://image.tmdb.org/t/p/w780${movie.poster_path}`" :alt="movie.title" />
-            <p>{{ movie.title }}</p>
-          </div>
+      <div class="carousel">
+        <div
+          v-for="movie in nowPlayingMovies"
+          :key="movie.id"
+          class="carousel-item"
+          @click="goToMovieDetails(movie.id)"
+        >
+          <img :src="`https://image.tmdb.org/t/p/w780${movie.poster_path}`" :alt="movie.title" class="carousel-image"/>
+          <p>{{ movie.title }}</p>
         </div>
-        <button class="carousel-control next" @click="nextPage('movies')">▶</button>
-      </div>
-      <div class="carousel-indicators">
-        <span
-          v-for="(_, index) in Math.ceil(nowPlayingMovies.length / ITEMS_PER_PAGE)"
-          :key="index"
-          :class="{ active: index === currentMoviePage }"
-        ></span>
       </div>
     </section>
 
-    <!-- Seção 2: Programas de TV -->
-    <section class="carousel-section">
-      <h2>📺 Principais Programas de TV</h2>
-      <div class="carousel-wrapper">
-        <button class="carousel-control prev" @click="prevPage('tv')">◀</button>
-        <div class="carousel">
-          <div
-            v-for="(tv, index) in trendingTVShows"
-            :key="tv.id"
-            class="carousel-item"
-            :style="getCarouselStyle(index, currentTVPage)"
-            @click="goToTVDetails(tv.id)"
+    <!-- Seção 2: Trailers Populares -->
+    <section
+      class="trailer-section"
+      :style="{ backgroundImage: `url(${activeTrailerBackground})` }"
+    >
+      <h2>🎥 Trailers Populares</h2>
+      <div class="trailer-list">
+        <div
+          v-for="trailer in trendingTrailers"
+          :key="trailer.trailerKey"
+          class="trailer-item"
+          @mouseover="setTrailerBackground(trailer.backdropPath)"
+        >
+          <a 
+            :href="'https://www.youtube.com/watch?v=' + trailer.trailerKey" 
+            target="_blank" 
+            class="trailer-link"
           >
-            <img :src="`https://image.tmdb.org/t/p/w780${tv.poster_path}`" :alt="tv.name" />
-            <p>{{ tv.name }}</p>
-          </div>
+            <img
+              :src="`https://img.youtube.com/vi/${trailer.trailerKey}/mqdefault.jpg`"
+              :alt="trailer.title"
+              class="trailer-image"
+            />
+            <div class="play-overlay">
+              <i class="fas fa-play"></i>
+            </div>
+          </a>
         </div>
-        <button class="carousel-control next" @click="nextPage('tv')">▶</button>
-      </div>
-      <div class="carousel-indicators">
-        <span
-          v-for="(_, index) in Math.ceil(trendingTVShows.length / ITEMS_PER_PAGE)"
-          :key="index"
-          :class="{ active: index === currentTVPage }"
-        ></span>
       </div>
     </section>
 
-    <!-- Seção 3: Atores em Destaque -->
+    <!-- Seção 3: Programas de TV -->
     <section class="carousel-section">
-      <h2>⭐ Atores em Destaque</h2>
-      <div class="carousel-wrapper">
-        <button class="carousel-control prev" @click="prevPage('actors')">◀</button>
-        <div class="carousel">
-          <div
-              v-for="(actor, index) in popularActors"
-              :key="actor.id"
-              class="carousel-item"
-              :style="getCarouselStyle(index, currentActorPage)"
-              @click="goToActorDetails(actor.id)" 
-            >
-            <img :src="`https://image.tmdb.org/t/p/w500${actor.profile_path}`" :alt="actor.name" />
-            <p>{{ actor.name }}</p>
-          </div>
-
+      <h2>📺 Programas de TV Populares</h2>
+      <div class="carousel">
+        <div
+          v-for="tv in trendingTVShows"
+          :key="tv.id"
+          class="carousel-item"
+          @click="goToTVDetails(tv.id)"
+        >
+          <img :src="`https://image.tmdb.org/t/p/w780${tv.poster_path}`" :alt="tv.name" class="carousel-image"/>
+          <p>{{ tv.name }}</p>
         </div>
-        <button class="carousel-control next" @click="nextPage('actors')">▶</button>
       </div>
-      <div class="carousel-indicators">
-        <span
-          v-for="(_, index) in Math.ceil(popularActors.length / ITEMS_PER_PAGE)"
-          :key="index"
-          :class="{ active: index === currentActorPage }"
-        ></span>
+    </section>
+
+    <!-- Seção 4: Atores em Destaque -->
+    <section class="carousel-section">
+      <h2>⭐ Atores Populares</h2>
+      <div class="carousel">
+        <div
+          v-for="actor in popularActors"
+          :key="actor.id"
+          class="carousel-item"
+          @click="goToActorDetails(actor.id)"
+        >
+          <img :src="`https://image.tmdb.org/t/p/w500${actor.profile_path}`" :alt="actor.name" class="carousel-image"/>
+          <p>{{ actor.name }}</p>
+        </div>
       </div>
-    </section>  
+    </section>
   </div>
 </template>
-
-
-
-
-
 
 <style scoped>
 .home {
@@ -199,110 +206,167 @@ const getCarouselStyle = (index, currentPage) => {
   color: #f4f4f4;
 }
 
-.carousel-section {
-  margin-bottom: 3rem;
-  position: relative;
+.results {
+  display: flex;
+  gap: 2rem;
+  flex-wrap: wrap;
 }
 
-.carousel-section h2 {
+.results div {
+  width: 200px;
+  text-align: center;
+}
+
+.results img {
+  width: 100%;
+  border-radius: 0.5rem;
+}
+
+/* Logo e nome */
+.logo-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 2rem;
+}
+
+.logo-image {
+  width: 300px;
+  height: 300px;
+  margin-right: 1rem;
+}
+
+/* Personalizando a scrollbar */
+::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+
+::-webkit-scrollbar-track {
+  background: #1a1a1a;
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: #ffcc00;
+  border-radius: 10px;
+  border: 2px solid #121212;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: #ffcc00;
+}
+
+::-webkit-scrollbar-button {
+  display: none;
+}
+/* Estilos para a seção de carrosséis */
+.carousel-section,
+.trailer-section {
+  margin-bottom: 3rem;
+}
+
+.carousel-section h2,
+.trailer-section h2 {
   font-size: 2rem;
   margin-bottom: 1rem;
   color: #ffcc00;
 }
 
-.carousel-wrapper {
-  display: flex;
-  align-items: center;
-  overflow: hidden;
-  position: relative;
-  width: 100%;
-  height: 600px; /* Altura comum para todas as seções */
-}
-
 .carousel {
   display: flex;
-  transition: transform 0.5s ease-in-out;
+  gap: 1rem;
+  overflow-x: auto;
+  scroll-behavior: smooth;
+  padding-bottom: 1rem;
 }
 
 .carousel-item {
-  flex: 0 0 calc(100% / 5); /* Ajustado para 5 itens */
+  flex: 0 0 auto;
+  width: 200px;
   text-align: center;
-  margin: 0 0.5rem;
+  position: relative;
 }
 
 .carousel-item img {
   width: 100%;
-  height: 100%;
-  object-fit: contain; /* Ajusta para mostrar o pôster inteiro */
-  background-color: #000;
+  height: 300px;
+  object-fit: cover;
   border-radius: 0.5rem;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  transition: transform 0.3s ease, opacity 0.3s ease;
+}
+
+.carousel-item:hover img {
+  transform: scale(1.05);
+  opacity: 0.8;
+}
+
+/* Estilos da seção de trailers */
+.trailer-section {
+  background-size: cover;
+  background-position: center;
+  padding: 4rem 2rem;
+  border-radius: 0.5rem;
+  position: relative;
+  overflow: hidden;
+  height: 500px;
+}
+
+.trailer-section h2 {
+  font-size: 2.5rem;
+  color: white;
+  text-shadow: 2px 2px 10px rgba(0, 0, 0, 0.7);
+  margin-bottom: 1rem;
+}
+
+.trailer-list {
+  display: flex;
+  justify-content: center;
+  gap: 2rem;
+  position: absolute;
+  bottom: 2rem;
+  width: 100%;
+}
+
+.trailer-item {
+  position: relative;
+  width: 250px;
+  cursor: pointer;
+}
+
+.trailer-image {
+  width: 100%;
+  height: 140px;
+  border-radius: 0.5rem;
   transition: transform 0.3s ease;
 }
 
-.carousel-item img:hover {
-  transform: scale(1.05); /* Zoom suave no hover */
+.trailer-item:hover .trailer-image {
+  transform: scale(1.05);
 }
 
-.carousel-control {
+.play-overlay {
   position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
-  background: rgba(0, 0, 0, 0.6);
-  border: none;
-  font-size: 2rem;
-  color: #ffcc00;
-  cursor: pointer;
-  z-index: 10;
-  padding: 0.5rem;
-  border-radius: 50%;
-  box-shadow: 0 0 0.5rem #000;
-}
-
-.carousel-control.prev {
-  left: 0.5rem;
-}
-
-.carousel-control.next {
-  right: 0.5rem;
-}
-
-.carousel-indicators {
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
   display: flex;
   justify-content: center;
-  margin-top: 1rem;
+  align-items: center;
+  background: rgba(0, 0, 0, 0.5);
+  color: white;
+  font-size: 2rem;
+  opacity: 0;
+  transition: opacity 0.3s;
 }
 
-.carousel-indicators span {
-  width: 1rem;
-  height: 1rem;
-  margin: 0 0.5rem;
-  background-color: #444;
-  border-radius: 50%;
-  cursor: pointer;
+.trailer-item:hover .play-overlay {
+  opacity: 1;
 }
 
-.carousel-indicators span.active {
-  background-color: #ffcc00;
-}
-
-@media (max-width: 768px) {
-  .carousel-item {
-    flex: 0 0 calc(100% / 3);
-  }
-
-  .carousel-wrapper {
-    height: 500px;
-  }
-}
-
-@media (max-width: 480px) {
-  .carousel-item {
-    flex: 0 0 calc(100% / 2);
-  }
-
-  .carousel-wrapper {
-    height: 400px;
-  }
+.trailer-link {
+  display: block;
+  text-decoration: none;
 }
 </style>

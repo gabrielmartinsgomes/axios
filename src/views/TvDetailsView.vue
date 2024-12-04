@@ -11,9 +11,9 @@ const props = defineProps({
 });
 
 onMounted(async () => {
-  console.log('ID do programa de TV:', props.tvId);
   await tvStore.getTVDetail(props.tvId);
-  console.log('Dados do programa de TV:', tvStore.currentTV);
+  const trailer = await tvStore.getTVTrailer(props.tvId);
+  tvStore.currentTV.trailer = trailer.data.results[0] || null;  // Armazenar o primeiro trailer, caso exista
 });
 </script>
 
@@ -31,6 +31,18 @@ onMounted(async () => {
         <p>{{ tvStore.currentTV.overview }}</p>
         <p>Primeiro episódio: {{ tvStore.currentTV.first_air_date }}</p>
         <p>Avaliação: {{ tvStore.currentTV.vote_average }}</p>
+        <!-- Exibir trailer -->
+        <div v-if="tvStore.currentTV.trailer">
+          <h2>Trailer:</h2>
+          <iframe
+            :src="`https://www.youtube.com/embed/${tvStore.currentTV.trailer.key}`"
+            width="560"
+            height="315"
+            frameborder="0"
+            allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
+            allowfullscreen
+          ></iframe>
+        </div>
       </div>
     </div>
 
@@ -38,14 +50,16 @@ onMounted(async () => {
       <template v-for="company in tvStore.currentTV.production_companies" :key="company.id">
         <img
           v-if="company.logo_path"
-          :src="`https://image.tmdb.org/t/p/w500${company.logo_path}`" 
+          :src="`https://image.tmdb.org/t/p/w500${company.logo_path}`"
           :alt="company.name"
-          class="company-logo" />
+          class="company-logo"
+        />
         <p v-else>{{ company.name }}</p>
       </template>
     </div>
   </div>
 </template>
+
 
 <style scoped>
 .main {
@@ -93,6 +107,24 @@ onMounted(async () => {
   font-size: 1.5rem;
   line-height: 2rem;
   color: #f4f4f4;
+}
+
+.trailer-link {
+  text-decoration: none;
+}
+
+.trailer-button {
+  background-color: #ffcc00;
+  color: #121212;
+  padding: 1rem 2rem;
+  font-size: 1.2rem;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.trailer-button:hover {
+  background-color: #e6b800;
 }
 
 .companies {
@@ -164,3 +196,4 @@ onMounted(async () => {
   }
 }
 </style>
+

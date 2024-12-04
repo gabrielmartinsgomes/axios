@@ -11,6 +11,10 @@ const formatDate = (date) => new Date(date).toLocaleDateString('pt-BR');
 const genreStore = useGenreStore();
 const router = useRouter();
 
+defineProps({
+  searchResults: Object
+});
+
 onMounted(async () => {
   isLoading.value = true;
   try {
@@ -47,15 +51,23 @@ function openTVShow(tvId) {
 
 <template>
   <div class="page">
+    <div v-if="searchResults.tv.length > 0" class="tv-view">
+      <h1>Programas de TV - Resultados da Pesquisa</h1>
+      <div class="results">
+        <div v-for="tv in searchResults.tv" :key="tv.id">
+          <h3>{{ tv.name }}</h3>
+          <img :src="`https://image.tmdb.org/t/p/w500${tv.poster_path}`" alt="Imagem do programa de TV" />
+        </div>
+      </div>
+    </div>
+    <div v-else>
+      <p>Nenhum programa de TV encontrado.</p>
+    </div>
+
     <h1>Programas de TV</h1>
     <ul class="genre-list">
-      <li
-        v-for="genre in genreStore.genres"
-        :key="genre.id"
-        @click="listTVShows(genre.id)"
-        class="genre-item"
-        :class="{ active: genre.id === genreStore.currentGenreId }"
-      >
+      <li v-for="genre in genreStore.genres" :key="genre.id" @click="listTVShows(genre.id)" class="genre-item"
+        :class="{ active: genre.id === genreStore.currentGenreId }">
         {{ genre.name }}
       </li>
     </ul>
@@ -67,11 +79,7 @@ function openTVShow(tvId) {
           <p class="card-title">{{ show.name }}</p>
           <p class="card-date">{{ formatDate(show.first_air_date) }}</p>
           <p class="card-genres">
-            <span
-              v-for="genre_id in show.genre_ids"
-              :key="genre_id"
-              @click.stop="listTVShows(genre_id)"
-            >
+            <span v-for="genre_id in show.genre_ids" :key="genre_id" @click.stop="listTVShows(genre_id)">
               {{ genreStore.getGenreName(genre_id) }}
             </span>
           </p>
@@ -85,8 +93,29 @@ function openTVShow(tvId) {
 <style scoped>
 .page {
   padding: 2rem;
-  background-color: #121212; /* Mesma cor de fundo da Home */
+  background-color: #121212;
+  /* Mesma cor de fundo da Home */
   color: #f4f4f4;
+}
+
+.tv-view {
+  padding: 2rem;
+}
+
+.results {
+  display: flex;
+  gap: 2rem;
+  flex-wrap: wrap;
+}
+
+.results div {
+  width: 200px;
+  text-align: center;
+}
+
+.results img {
+  width: 100%;
+  border-radius: 0.5rem;
 }
 
 .genre-list {
@@ -128,7 +157,8 @@ function openTVShow(tvId) {
   width: 15rem;
   border-radius: 0.5rem;
   overflow: hidden;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3); /* Altere para um sombreamento similar à Home */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+  /* Altere para um sombreamento similar à Home */
   background-color: #1e1e1e;
   color: #fff;
   cursor: pointer;
@@ -143,7 +173,8 @@ function openTVShow(tvId) {
 .card img {
   width: 100%;
   height: 22rem;
-  object-fit: contain; /* Mesma lógica da Home */
+  object-fit: contain;
+  /* Mesma lógica da Home */
   border-radius: 0.5rem;
 }
 
@@ -237,5 +268,4 @@ function openTVShow(tvId) {
     font-size: 0.7rem;
   }
 }
-
 </style>
